@@ -1,0 +1,68 @@
+import requests
+import random
+import string
+import time
+import os
+from concurrent.futures import ThreadPoolExecutor
+
+# ==========================================
+# CONFIGURATION
+# ==========================================
+THREADS = 20  # عدد المسارات لاستغلال قوة المعالج
+TARGET_COUNT = 30 # عدد الأسماء المطلوب صيدها
+
+def generate_xa_style():
+    """توليد نمط حرفين + شرطة + رقم (مثل xa_0)"""
+    chars = string.ascii_lowercase
+    nums = string.digits
+    
+    # توليد حرفين عشوائيين
+    c1 = random.choice(chars)
+    c2 = random.choice(chars)
+    # اختيار رقم عشوائي
+    n1 = random.choice(nums)
+    
+    # يمكنك التبديل بين وضع الرقم في البداية أو النهاية لزيادة الاحتمالات
+    patterns = [
+        f"{c1}{c2}_{n1}", # النمط المطلوب: xa_0
+        f"{n1}_{c1}{c2}", # النمط العكسي: 0_xa
+    ]
+    return random.choice(patterns)
+
+def check_task(task_id):
+    while True:
+        candidate = generate_xa_style()
+        url = f"https://auth.roblox.com/v1/usernames/validate?request.username={candidate}&request.birthday=2000-01-01"
+        
+        try:
+            response = requests.get(url, timeout=3)
+            
+            if response.status_code == 429:
+                time.sleep(10) # انتظار عند الحظر المؤقت
+                continue
+            
+            if response.json().get("code") == 0:
+                print(f"\n✨ [OG HIT] Found: {candidate} (Thread-{task_id})")
+                with open("og_found.txt", "a") as f:
+                    f.write(f"User: {candidate} | Pass: OG_Hunt_{random.randint(100,999)}\n")
+                continue # استمر في الصيد
+            
+            print(f"🚀 Thread-{task_id} Scanning: {candidate} ..", end="\r")
+            
+        except:
+            pass
+
+def start_og_hunt():
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print("====================================================")
+    print("   🎯 OG PATTERN SNIPER - STYLE: xa_0               ")
+    print("   OPTIMIZED FOR RYZEN 5 5600 | 12 THREADS         ")
+    print("====================================================")
+    print(f"Status: Hunting for {TARGET_COUNT} rare names...\n")
+
+    with ThreadPoolExecutor(max_workers=THREADS) as executor:
+        for i in range(THREADS):
+            executor.submit(check_task, i)
+
+if __name__ == "__main__":
+    start_og_hunt()
